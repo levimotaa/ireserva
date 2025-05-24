@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: ireserva-postgres
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ireserva
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ireserva-network
+
+  backend:
+    container_name: ireserva-api
+    build: ./backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/ireserva
+      - JWT_SECRET=sua_chave_secreta
+    networks:
+      - ireserva-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ireserva-network:
+    driver: bridge 
