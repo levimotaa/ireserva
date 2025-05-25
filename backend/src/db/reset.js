@@ -2,9 +2,10 @@ const db = require('../config/database');
 
 const resetStays = async () => {
     try {
-        // Limpar a tabela
-        await db.query('TRUNCATE TABLE stays RESTART IDENTITY');
-        console.log('Tabela stays limpa com sucesso');
+        // Limpar as tabelas na ordem correta
+        await db.query('TRUNCATE TABLE reservations CASCADE');
+        await db.query('TRUNCATE TABLE stays RESTART IDENTITY CASCADE');
+        console.log('Tabelas limpas com sucesso');
 
         // Inserir novos dados
         const query = `

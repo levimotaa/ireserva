@@ -9,8 +9,8 @@ export function PrivateRoute({ children }: PrivateRouteProps) {
   const { isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
-    // Redireciona para a página de login se não estiver autenticado
-    return <Navigate to="/login" replace />;
+    // Redireciona para a página inicial
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

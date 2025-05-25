@@ -8,9 +8,23 @@ router.get('/', async (req, res) => {
     console.log('Recebida requisição GET /stays');
     try {
         console.log('Tentando executar query no banco de dados...');
-        const result = await db.query(
-            'SELECT DISTINCT ON (id) id, title, price, price_type as "priceType", img_url as "imgUrl", rating, location FROM stays ORDER BY id'
-        );
+        const result = await db.query(`
+            SELECT 
+                id, 
+                title, 
+                description,
+                price::numeric, 
+                price_type as "priceType", 
+                img_url as "imgUrl", 
+                rating::numeric, 
+                location,
+                amenities,
+                max_guests as "maxGuests",
+                bedrooms,
+                bathrooms
+            FROM stays 
+            ORDER BY id
+        `);
         console.log('Query executada com sucesso:', result.rows);
         res.json(result.rows);
     } catch (error) {
@@ -22,10 +36,23 @@ router.get('/', async (req, res) => {
 // Buscar hospedagem por ID (público)
 router.get('/:id', async (req, res) => {
     try {
-        const result = await db.query(
-            'SELECT id, title, price, price_type as "priceType", img_url as "imgUrl", rating, location FROM stays WHERE id = $1',
-            [req.params.id]
-        );
+        const result = await db.query(`
+            SELECT 
+                id, 
+                title, 
+                description,
+                price::numeric, 
+                price_type as "priceType", 
+                img_url as "imgUrl", 
+                rating::numeric, 
+                location,
+                amenities,
+                max_guests as "maxGuests",
+                bedrooms,
+                bathrooms
+            FROM stays 
+            WHERE id = $1
+        `, [req.params.id]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Hospedagem não encontrada' });
@@ -42,7 +69,7 @@ router.get('/:id', async (req, res) => {
 router.get('/search/:location', async (req, res) => {
     try {
         const result = await db.query(
-            'SELECT DISTINCT ON (id) id, title, price, price_type as "priceType", img_url as "imgUrl", rating, location FROM stays WHERE LOWER(location) LIKE LOWER($1) ORDER BY id',
+            'SELECT id, title, price::numeric, price_type as "priceType", img_url as "imgUrl", rating::numeric, location FROM stays WHERE LOWER(location) LIKE LOWER($1) ORDER BY id',
             [`%${req.params.location}%`]
         );
         res.json(result.rows);
@@ -60,7 +87,7 @@ router.post('/', auth, async (req, res) => {
         const result = await db.query(
             `INSERT INTO stays (title, price, price_type, img_url, rating, location) 
              VALUES ($1, $2, $3, $4, $5, $6) 
-             RETURNING id, title, price, price_type as "priceType", img_url as "imgUrl", rating, location`,
+             RETURNING id, title, price::numeric, price_type as "priceType", img_url as "imgUrl", rating::numeric, location`,
             [title, price, priceType, imgUrl, rating, location]
         );
 

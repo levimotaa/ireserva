@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService, LoginCredentials } from '../services/auth.service';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { authService } from '../services/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any;
-  login: (credentials: LoginCredentials) => Promise<boolean>;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  checkAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -15,55 +17,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Verifica o estado de autenticação ao carregar a aplicação
-    const checkAuth = async () => {
-      try {
-        const authenticated = authService.isAuthenticated();
-        setIsAuthenticated(authenticated);
-        if (authenticated) {
-          setUser(authService.getCurrentUser());
-        }
-      } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
-      } finally {
-        setIsLoading(false);
+  // Função para verificar e atualizar o estado de autenticação
+  const checkAuth = useCallback(async () => {
+    console.log("AuthContext: checkAuth chamado");
+    setIsLoading(true); // Iniciar o carregamento ao verificar
+    try {
+      const authenticated = authService.isAuthenticated();
+      console.log("AuthContext: isAuthenticated resultado:", authenticated);
+      setIsAuthenticated(authenticated);
+      if (authenticated) {
+        const currentUser = authService.getCurrentUser();
+        console.log("AuthContext: currentUser:", currentUser);
+        setUser(currentUser);
+      } else {
+        setUser(null);
       }
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error);
+      setIsAuthenticated(false);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+      console.log("AuthContext: checkAuth finalizado, isLoading:", false);
+    }
+  }, []); // useCallback para estabilizar a função
+
+  // Verificar autenticação ao montar o componente
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  // Verificar autenticação quando o localStorage mudar
+  useEffect(() => {
+    const handleStorageChange = () => {
+      console.log("AuthContext: storage event detectado, chamando checkAuth");
+      checkAuth();
     };
 
-    checkAuth();
-  }, []);
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [checkAuth]);
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (email: string, password: string) => {
     try {
-      const success = await authService.login(credentials);
-      if (success) {
-        setIsAuthenticated(true);
-        setUser(authService.getCurrentUser());
+      const response = await authService.login(email, password);
+      if (response.user) {
+        await checkAuth(); // Atualiza o estado após o login
+        return true;
       }
-      return success;
+      return false;
     } catch (error) {
       console.error('Erro no login:', error);
-      return false;
+      // Aqui você pode querer lançar o erro ou retornar uma mensagem de erro específica
+      // que pode ser pega pelo LoginModal
+      throw error; // Propagar o erro para o LoginModal tratar
     }
   };
 
   const logout = () => {
     try {
       authService.logout();
+      // Não precisa chamar checkAuth aqui, pois o estado é definido diretamente
       setIsAuthenticated(false);
       setUser(null);
+      console.log("AuthContext: Usuário deslogado");
     } catch (error) {
       console.error('Erro no logout:', error);
     }
   };
 
-  if (isLoading) {
-    return null; // ou um componente de loading
-  }
-
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, checkAuth, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

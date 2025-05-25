@@ -5,18 +5,26 @@ const path = require('path');
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Servir arquivos estáticos
-app.use('/', express.static(path.join(__dirname, '../../public')));
-
-// Log de requisições
+// Log de requisições (antes de tudo para capturar todas as requisições)
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
+
+// Middleware
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    credentials: true
+}));
+app.use(express.json());
+
+// Servir arquivos estáticos com configuração específica
+app.use('/images', express.static('/app/public/images', {
+    setHeaders: (res) => {
+        res.set('Cache-Control', 'public, max-age=31536000');
+        res.set('Access-Control-Allow-Origin', '*');
+    }
+}));
 
 // Rotas
 app.use('/', routes);

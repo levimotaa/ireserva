@@ -34,9 +34,13 @@ router.post('/register', async (req, res) => {
         );
 
         // Gerar token
+        if (!process.env.JWT_SECRET) {
+            console.error('Erro Crítico: JWT_SECRET não está definida no ambiente para assinar o token.');
+            return res.status(500).json({ message: 'Erro interno do servidor: Falha ao gerar token de autenticação.' });
+        }
         const token = jwt.sign(
             { id: result.rows[0].id },
-            'seu_jwt_secret',
+            process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
@@ -84,9 +88,13 @@ router.post('/login', async (req, res) => {
         }
 
         // Gerar token
+        if (!process.env.JWT_SECRET) {
+            console.error('Erro Crítico: JWT_SECRET não está definida no ambiente para assinar o token.');
+            return res.status(500).json({ message: 'Erro interno do servidor: Falha ao gerar token de autenticação.' });
+        }
         const token = jwt.sign(
             { id: user.id },
-            'seu_jwt_secret',
+            process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 

@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import App from './App';
 import { PrivateRoute } from './components/PrivateRoute';
+import MinhasReservas from './pages/MinhasReservas';
 
 export function AppRoutes() {
   return (
@@ -8,12 +9,12 @@ export function AppRoutes() {
       {/* Rotas públicas */}
       <Route path="/" element={<App />} />
       
-      {/* Rotas privadas (exemplo) */}
+      {/* Rotas privadas */}
       <Route
-        path="/reservas"
+        path="/minhas-reservas"
         element={
           <PrivateRoute>
-            <div>Página de Reservas</div>
+            <MinhasReservas />
           </PrivateRoute>
         }
       />

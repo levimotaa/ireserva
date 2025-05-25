@@ -12,7 +12,11 @@ const authMiddleware = (req, res, next) => {
         const [, token] = authHeader.split(' ');
         
         // Verificar se o token é válido
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'sua_chave_secreta');
+        if (!process.env.JWT_SECRET) {
+            console.error('Erro Crítico: JWT_SECRET não está definida no ambiente.');
+            return res.status(500).json({ message: 'Erro interno do servidor: Configuração de segurança ausente.' });
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
         // Adicionar o ID do usuário ao request
         req.userId = decoded.id;

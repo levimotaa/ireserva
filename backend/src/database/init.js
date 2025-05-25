@@ -49,6 +49,19 @@ const initDatabase = async () => {
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS reservations (
+                id SERIAL PRIMARY KEY,
+                user_id UUID NOT NULL REFERENCES users(id),
+                stay_id INTEGER NOT NULL REFERENCES stays(id),
+                check_in_date DATE NOT NULL,
+                check_out_date DATE NOT NULL,
+                total_price DECIMAL(10,2) NOT NULL,
+                status VARCHAR(50) NOT NULL DEFAULT 'pendente',
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT valid_dates CHECK (check_out_date > check_in_date)
+            );
         `);
 
         // Inserir dados de exemplo

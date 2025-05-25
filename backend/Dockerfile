@@ -1,6 +1,9 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
+
+# Instalar netcat
+RUN apk add --no-cache netcat-openbsd
 
 COPY package*.json ./
 
@@ -10,4 +13,8 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "start"] 
+# Script de inicialização
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["docker-entrypoint.sh"] 

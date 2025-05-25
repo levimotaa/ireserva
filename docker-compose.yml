@@ -14,19 +14,37 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - ireserva-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  backend:
+  api:
     container_name: ireserva-api
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    depends_on:
-      - postgres
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/ireserva
-      - JWT_SECRET=sua_chave_secreta
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: ireserva
+      NODE_ENV: development
+      JWT_SECRET: 'umaChaveSuperSecretaELongaParaMaiorSeguranca'
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./public/images:/app/public/images
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - ireserva-network
+    command: npm run dev
 
 volumes:
   postgres_data:
